@@ -1,0 +1,98 @@
+const express = require("express");
+const EmployeeModel = require("../models/Employee");
+const routes = express.Router();
+
+routes.get("/employee", (req, res) => {
+    EmployeeModel.find()
+        .then((employees) => {
+            res.status(200).send(employees);
+        })
+        .catch((err) => {
+            res.status(500).send({ message: err.message });
+        });
+});
+
+routes.post("/employee", async (req, res) => {
+    const employeeData = req.body;
+    try {
+        const employee = new EmployeeModel(employeeData);
+        const newEmployee = await employee.save();
+        res.status(201).send({
+            message: "Employee created successfully.",
+            employee_id: newEmployee._id,
+        });
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+});
+
+routes.get("/employee/:id", (req, res) => {
+    EmployeeModel.findById(req.params.id)
+        .then((employee) => {
+            if (employee) {
+                res.status(200).send(employee);
+            } else {
+                res.status(404).send({ message: "Employee not found" });
+            }
+        })
+        .catch((err) => {
+            res.status(500).send({ message: err.message });
+        });
+});
+
+routes.put("/employee/:id", (req, res) => {
+    EmployeeModel.findByIdAndUpdate(req.params.id, req.body, { new: true })
+        .then((employee) => {
+            if (employee) {
+                res.status(200).send({
+                    message: "Employee details updated successfully. ",
+                    employee,
+                });
+            } else {
+                res.status(404).send({ message: "Employee not found" });
+            }
+        })
+        .catch((err) => {
+            res.status(500).send({ message: err.message });
+        });
+});
+
+routes.delete("/employee/:id", (req, res) => {
+    EmployeeModel.findByIdAndDelete(req.params.id)
+        .then((employee) => {
+            if (employee) {
+                res.status(200).send({
+                    message: "Employee deleted successfully.",
+                });
+            } else {
+                res.status(404).send({ message: "Employee not found for delete" });
+            }
+        })
+        .catch((err) => {
+            res.status(500).send({ message: err.message });
+        });
+});
+
+routes.get("/employee/search", (req, res) => {
+    const { department, position } = req.query;
+    const filter = {};
+
+    if (department) {
+        filter.department = department;
+    }
+
+    if (position) {
+        filter.position = position;
+    }
+
+    EmployeeModel.find(filter)
+        .then((employees) => {
+            res.status(200).send(employees);
+        })
+        .catch((err) => {
+            res.status(500).send({ message: err.message });
+        });
+});
+
+
+module.exports = routes;
